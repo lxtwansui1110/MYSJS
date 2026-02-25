@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>技能树</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 移动端顶部菜单栏 -->
+        <div class="mobile-header" id="mobileHeader" style="display: none;">
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+            <div class="mobile-header-title" id="mobileTitle">技能树</div>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <!-- 侧滑菜单遮挡层 -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- 左侧功能菜单 -->
+        <div class="sidebar" id="sidebar">
+            <!-- 技能管理 -->
+            <div class="canvas-management">
+                <h4>技能管理</h4>
+                <select id="canvasSelector" class="form-control"></select>
+                <button id="createCanvasBtn" class="btn btn-secondary">新建分类</button>
+                <button id="renameCanvasBtn" class="btn btn-secondary">重命名</button>
+                <button id="deleteCanvasBtn" class="btn btn-danger">删除当前分类</button>
+                <div id="currentCanvasName" style="margin-top: 8px; font-size: 13px; color: #666;"></div>
+            </div>
+
+            <!-- 核心功能 -->
+            <div class="core-functions">
+                <h4>核心功能</h4>
+                <button id="addSkillBtn" class="btn btn-primary">添加新技能</button>
+                <button id="exportBtn" class="btn btn-secondary">导出当前面板</button>
+                <button id="importBtn" class="btn btn-secondary">导入数据</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+                <button id="clearAllBtn" class="btn btn-danger">清空当前面板</button>
+            </div>
+
+          <!-- 统计面板 -->
+<div class="stats-panel">
+    <h4 style="margin-bottom: 10px; font-size: 14px; color: #4A90E2; font-weight: 500;">
+        专精类别：
+        <select id="specialtyType" class="form-control" style="width: auto; display: inline-block; padding: 4px 8px; font-size: 13px; margin-left: 8px;">
+            <option value="箭术">箭术</option>
+            <option value="格斗">格斗</option>
+            <option value="灵觉">灵觉</option>
+            <option value="潜行">潜行</option>
+            <option value="急救">急救</option>
+        </select>
+        <!-- 自定义输入框（默认隐藏） -->
+        <input type="text" id="customSpecialty" class="form-control" style="width: auto; display: none; padding: 4px 8px; font-size: 13px; margin-left: 8px;" placeholder="输入专精名称">
+    </h4>
+    <div class="stats-item">
+        <span>专精等级：</span>
+        <span id="specialtyLevel">0</span>
+    </div>
+    <div class="stats-item">
+        <span>共计花费：</span>
+        <span id="totalCost">0</span> 元
+    </div>
+</div>
+
+            <!-- 面板控制 -->
+            <div class="canvas-control-buttons">
+                <h4>面板控制</h4>
+                <button id="resetViewBtn" class="btn btn-secondary">重置视图</button>
+                <button id="autoAlignBtn" class="btn btn-secondary">自动对齐</button>
+            </div>
+        </div>
+
+        <!-- 右侧画布区域 -->
+        <div class="canvas-wrapper">
+            <div id="canvasContainer">
+                <div id="skillCanvas"></div>
+                <!-- 框选区域容器（新增） -->
+                <div id="selectionBox" class="selection-box"></div>
+            </div>
+
+            <!-- 缩放控制 -->
+            <div class="canvas-controls">
+                <button id="zoomOutBtn" class="btn btn-secondary">-</button>
+                <div class="zoom-control">
+                    <input type="range" id="zoomSlider" min="0.5" max="2" step="0.1" value="1">
+                    <span id="zoomValue">100%</span>
+                </div>
+                <button id="zoomInBtn" class="btn btn-secondary">+</button>
+            </div>
+
+            <!-- 技能信息面板 -->
+            <div class="skill-info-panel" id="skillInfo">
+                <div class="skill-info-header">
+                    <h3>技能详情</h3>
+                    <button id="toggleInfoPanel" class="btn-icon">◀</button>
+                </div>
+                <div class="skill-info-content">
+                    <p style="text-align: center; color: #666; padding: 20px 0;">点击一个技能查看详情</p>
+                </div>
+            </div>
+
+            <!-- 快捷操作面板 -->
+            <div class="quick-actions">
+                <button id="quickEditBtn" class="quick-btn" title="编辑选中技能">✏️</button>
+                <button id="quickUpgradeBtn" class="quick-btn" title="升级选中技能">⬆️</button>
+                <button id="quickDeleteBtn" class="quick-btn" title="删除选中技能">🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框（原有+新增金钱设置） -->
+<div id="skillModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="closeModal">&times;</span>
+        <div class="modal-header">
+            <h2 id="modalTitle">添加新技能</h2>
+        </div>
+        <form id="addSkillForm">
+            <input type="hidden" id="skillId">
+            <div class="form-group">
+                <label for="skillName">技能名称：</label>
+                <input type="text" id="skillName" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="skillDescription">技能描述：</label>
+                <textarea id="skillDescription" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>技能图标：</label>
+                <div class="custom-select">
+                    <div class="custom-select-trigger" id="skillIconTrigger">
+                        <span id="selectedIcon">🎯 目标</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="custom-select-options" id="skillIconOptions"></div>
+                </div>
+                <input type="hidden" id="skillIconValue" value="🎯">
+            </div>
+            <div id="parentSkillsContainer" class="form-group"></div>
+            
+            <!-- 新增：金钱关联设置框（学习花费） -->
+            <div class="form-group">
+                <label for="skillCost">学习花费（元）：</label>
+                <input type="number" id="skillCost" class="form-control" min="0" value="100" required>
+                <small style="color: #666; margin-top: 4px; display: block;">设置学习该技能需要消耗的元数量</small>
+            </div>
+            <!-- 可选：新增升级花费（按等级） -->
+            <div class="form-group">
+                <label for="skillLevelCost">每级升级花费（元）：</label>
+                <input type="number" id="skillLevelCost" class="form-control" min="0" value="50">
+                <small style="color: #666; margin-top: 4px; display: block;">每提升1级技能额外消耗的元（0=无升级花费）</small>
+            </div>
+
+            <div class="form-group">
+                <label for="completionRateInput">掌握程度：</label>
+                <input type="range" id="completionRateInput" min="0" max="5" step="1" value="0" class="form-control">
+                <div id="levelText">0星 (未入门)</div>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+            <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+        </form>
+    </div>
+</div>
+
+<div id="renameCanvasModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="closeRenameModal">&times;</span>
+        <div class="modal-header">
+            <h2>重命名技能</h2>
+        </div>
+        <form id="renameCanvasForm">
+            <div class="form-group">
+                <label for="canvasNewName">新名称：</label>
+                <input type="text" id="canvasNewName" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">确认</button>
+            <button type="button" id="cancelRenameBtn" class="btn btn-secondary">取消</button>
+        </form>
+    </div>
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
